@@ -178,14 +178,14 @@ module Gemini
 
         method_to_call = request_method.to_s.strip.downcase.to_sym
 
-        response = Faraday.new(request: @request_options) do |faraday|
-          faraday.adapter @faraday_adapter
-          faraday.response :raise_error
-        end.send(method_to_call) do |request|
+        response = connection.send(method_to_call) do |request|
           request.url url
           request.headers['Content-Type'] = 'application/json'
           if @authentication == :service_account || @authentication == :default_credentials
-            request.headers['Authorization'] = "Bearer #{@authorizer.fetch_access_token!['access_token']}"
+            # Use apply! instead of fetch_access_token! to leverage googleauth's built-in
+            # token caching. apply! only fetches a new token if the current one is missing
+            # or expires within 60 seconds.
+            @authorizer.apply!(request.headers)
           end
 
           request.body = payload.to_json unless payload.nil?
@@ -241,6 +241,19 @@ module Gemini
         raw.to_s.lstrip.start_with?('{', '[') ? JSON.parse(raw) : nil
       rescue JSON::ParserError
         nil
+      end
+
+      private
+
+      def connection
+        @connection ||= build_connection
+      end
+
+      def build_connection
+        Faraday.new(request: @request_options) do |faraday|
+          faraday.adapter @faraday_adapter
+          faraday.response :raise_error
+        end
       end
     end
   end
