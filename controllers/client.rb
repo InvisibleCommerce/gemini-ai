@@ -2,9 +2,9 @@
 
 require 'event_stream_parser'
 require 'faraday'
-require 'faraday/typhoeus'
 require 'json'
 require 'googleauth'
+require 'async/http/faraday'
 
 require_relative '../components/errors'
 
@@ -13,7 +13,7 @@ module Gemini
     class Client
       ALLOWED_REQUEST_OPTIONS = %i[timeout open_timeout read_timeout write_timeout].freeze
 
-      DEFAULT_FARADAY_ADAPTER = :typhoeus
+      DEFAULT_FARADAY_ADAPTER = :async_http
 
       DEFAULT_SERVICE_VERSION = 'v1'
 
