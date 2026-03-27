@@ -76,7 +76,10 @@ module Gemini
 
         @request_options = config.dig(:options, :connection, :request)
 
-        @faraday_adapter = config.dig(:options, :connection, :adapter) || DEFAULT_FARADAY_ADAPTER
+        @headers = config.dig(:options, :headers) || {}
+
+        adapter = config.dig(:options, :connection, :adapter) || DEFAULT_FARADAY_ADAPTER
+        @faraday_adapter = Array(adapter)
 
         @request_options = if @request_options.is_a?(Hash)
                              @request_options.slice(*ALLOWED_REQUEST_OPTIONS)
@@ -181,7 +184,7 @@ module Gemini
         method_to_call = request_method.to_s.strip.downcase.to_sym
 
         response = Faraday.new(request: @request_options) do |faraday|
-          faraday.adapter @faraday_adapter
+          faraday.adapter(*@faraday_adapter)
           faraday.response :raise_error
         end.send(method_to_call) do |request|
           request.url url
@@ -189,6 +192,8 @@ module Gemini
           if @authentication == :service_account || @authentication == :default_credentials
             request.headers['Authorization'] = "Bearer #{@authorizer.fetch_access_token!['access_token']}"
           end
+
+          @headers.each { |key, value| request.headers[key] = value }
 
           request.body = payload.to_json unless payload.nil?
 

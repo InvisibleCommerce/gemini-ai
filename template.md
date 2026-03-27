@@ -1324,6 +1324,46 @@ client = Gemini.new(
 ```
 
 
+### Custom Headers
+
+You can pass custom headers to all requests. This is useful for configuring [Priority PayGo](https://cloud.google.com/vertex-ai/generative-ai/docs/priority-paygo):
+
+```ruby
+# Priority PayGo with Provisioned Throughput fallback:
+client = Gemini.new(
+  credentials: { service: 'vertex-ai-api', region: 'us-east4' },
+  options: {
+    model: 'gemini-2.0-flash',
+    headers: {
+      'X-Vertex-AI-LLM-Shared-Request-Type' => 'priority'
+    }
+  }
+)
+
+# Priority PayGo only (no Provisioned Throughput):
+client = Gemini.new(
+  credentials: { service: 'vertex-ai-api', region: 'us-east4' },
+  options: {
+    model: 'gemini-2.0-flash',
+    headers: {
+      'X-Vertex-AI-LLM-Request-Type' => 'shared',
+      'X-Vertex-AI-LLM-Shared-Request-Type' => 'priority'
+    }
+  }
+)
+
+# Standard PayGo only (no Provisioned Throughput):
+client = Gemini.new(
+  credentials: { service: 'vertex-ai-api', region: 'us-east4' },
+  options: {
+    model: 'gemini-2.0-flash',
+    headers: {
+      'X-Vertex-AI-LLM-Request-Type' => 'shared'
+    }
+  }
+)
+```
+
 ### Error Handling
 
 #### Rescuing
